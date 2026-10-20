@@ -122,8 +122,8 @@ void loop() {
     i++;
     avered = avered * frate + fred * (1.0 - frate);
     aveir = aveir * frate + fir * (1.0 - frate); 
-    sumredrms += (fred - avered) * (fred - avered); //υπολ, Μ.Ο 
-    sumirrms += (fir - aveir) * (fir - aveir);//Υπολ ενεργειας παλμου
+    sumredrms += (fred - avered) * (fred - avered); // red: pulse (AC) energy around the moving average
+    sumirrms += (fir - aveir) * (fir - aveir);      // IR: pulse (AC) energy around the moving average
 
     if ((i % Num) == 0) {
       double R = (sqrt(sumredrms) / avered) / (sqrt(sumirrms) / aveir);

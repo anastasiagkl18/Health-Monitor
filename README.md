@@ -1,7 +1,7 @@
 <h1 align="center">Smart Health Monitor</h1>
 
 <p align="center">
-  <b>Σύστημα βιομετρικής παρακολούθησης μέσω IoT με Arduino Mega, ESP8266 και Blynk</b>
+  <b>IoT biometric monitoring with Arduino Mega, ESP8266 and Blynk</b>
 </p>
 
 <p align="center">
@@ -12,164 +12,166 @@
   <img alt="DHT11" src="https://img.shields.io/badge/DHT11-temp%20%26%20humidity-6C8A82">
 </p>
 
-Ένας **Arduino Mega 2560** μετρά **καρδιακούς παλμούς και κορεσμό οξυγόνου** με τον αισθητήρα MAX30105, καθώς και
-**θερμοκρασία και υγρασία** περιβάλλοντος με τον DHT11. Οι τιμές εμφανίζονται σε **οθόνη LCD**, ένα **φανάρι LED**
-δείχνει αν είναι φυσιολογικές, και μέσω **ESP8266** στέλνονται στο **Blynk Cloud** για απομακρυσμένη παρακολούθηση από
-το κινητό, με **ειδοποίηση** όταν βγουν εκτός ορίων.
+An **Arduino Mega 2560** measures **heart rate and blood oxygen** with the MAX30105 sensor, plus room **temperature and
+humidity** with a DHT11. Values are shown on an **LCD**, a **traffic-light LED** shows whether they are normal, and an
+**ESP8266** sends them to the **Blynk Cloud** for remote monitoring from a phone, with an **alert** when they go out of
+range.
 
-Έρλα Γκικούλη (ΑΜ 2020/047), Διεθνές Πανεπιστήμιο της Ελλάδος, Δεκέμβριος 2025.
+Erla Gkikouli, International Hellenic University, December 2025.
 
 > [!NOTE]
-> Εκπαιδευτικό project. Δεν είναι ιατρική συσκευή και οι μετρήσεις του δεν έχουν επικυρωθεί κλινικά.
+> Educational project. It is not a medical device and its measurements have not been clinically validated.
 
 ---
 
-## Σκοπός
+## Purpose
 
-Συνεχής παρακολούθηση τριών κατηγοριών δεδομένων, **τοπικά και από απόσταση**:
+Continuous monitoring of three kinds of data, **locally and remotely**:
 
-| | Μέγεθος | Πώς μετριέται |
+| | Quantity | How it is measured |
 |---|---|---|
-| 💓 | **Καρδιακοί παλμοί (BPM)** | φωτοπληθυσμογραφία (PPG) με τον MAX30105 |
-| 🩸 | **Κορεσμός οξυγόνου (SpO₂)** | σύγκριση κόκκινου και υπέρυθρου φωτός |
-| 🌡️ | **Περιβάλλον** | θερμοκρασία και σχετική υγρασία με τον DHT11 |
+| 💓 | **Heart rate (BPM)** | photoplethysmography (PPG) with the MAX30105 |
+| 🩸 | **Blood oxygen (SpO₂)** | comparing red and infrared light |
+| 🌡️ | **Environment** | temperature and relative humidity with the DHT11 |
 
-Η συσκευή λειτουργεί και **αυτόνομα χωρίς WiFi** (οθόνη και LED). Με σύνδεση, τα δεδομένα φτάνουν στο κινητό μέσω Blynk.
+The device also works **stand-alone without WiFi** (display and LEDs). With a connection, the data reach the phone
+through Blynk.
 
 ---
 
-## Πώς λειτουργεί
+## How it works
 
 ```mermaid
 flowchart LR
-    A["👆 Δάχτυλο"] --> B["MAX30105<br/>παλμοί + SpO₂"]
-    T["🌡️ DHT11<br/>θερμοκρασία + υγρασία"] --> M
+    A["👆 Finger"] --> B["MAX30105<br/>heart rate + SpO₂"]
+    T["🌡️ DHT11<br/>temperature + humidity"] --> M
     B -->|I2C| M["Arduino Mega 2560"]
-    M --> L["Οθόνη LCD 16x2<br/>(κάθε 1s)"]
-    M --> G["LED πράσινο / κόκκινο"]
+    M --> L["16x2 LCD<br/>(every 1 s)"]
+    M --> G["Green / red LED"]
     M -->|Serial1| E["ESP8266-01<br/>WiFi"]
-    E -->|"κάθε 4s"| C["☁️ Blynk Cloud"]
-    C --> P["📱 Εφαρμογή Blynk<br/>+ ειδοποιήσεις"]
+    E -->|"every 4 s"| C["☁️ Blynk Cloud"]
+    C --> P["📱 Blynk app<br/>+ notifications"]
 ```
 
-| Τι δείχνει | Πού | Κάθε πότε |
+| What | Where | How often |
 |---|---|---|
-| Παλμοί (BPM) και οξυγόνο (SpO₂) | LCD γραμμή 1, Blynk `V0`, `V1` | 1s (LCD), 4s (Blynk) |
-| Θερμοκρασία και υγρασία | LCD γραμμή 2, Blynk `V2`, `V3` | 1s (LCD), 4s (Blynk) |
-| 🟢 Πράσινο LED | τιμές φυσιολογικές: 50–110 BPM και SpO₂ ≥ 90% | συνεχώς |
-| 🔴 Κόκκινο LED | χωρίς δάχτυλο ή τιμές εκτός ορίων | συνεχώς |
-| 🔔 Ειδοποίηση `health_alert` | BPM > 110 ή SpO₂ < 90% | στην αποστολή στο Blynk |
+| Heart rate (BPM) and SpO₂ | LCD line 1, Blynk `V0`, `V1` | 1 s (LCD), 4 s (Blynk) |
+| Temperature and humidity | LCD line 2, Blynk `V2`, `V3` | 1 s (LCD), 4 s (Blynk) |
+| 🟢 Green LED | normal values: 50–110 BPM and SpO₂ ≥ 90% | continuously |
+| 🔴 Red LED | no finger, or values out of range | continuously |
+| 🔔 `health_alert` event | BPM > 110 or SpO₂ < 90% | on each Blynk upload |
 
 ---
 
-## Γιατί Arduino Mega 2560
+## Why an Arduino Mega 2560
 
-| Χαρακτηριστικό | Γιατί χρειάζεται εδώ |
+| Feature | Why it matters here |
 |---|---|
-| **4 σειριακές θύρες (UART)** | Η `Serial1` (pins 18, 19) είναι αφιερωμένη στο ESP8266, ενώ η `Serial0` μένει ελεύθερη για debugging μέσω USB. |
-| **256 KB μνήμη Flash** | Χωράνε μαζί οι βιβλιοθήκες Blynk, MAX30105, DHT, LCD και ESP8266. Ο κώδικας πιάνει μόλις το 11%. |
-| **54 ψηφιακά και 16 αναλογικά pins** | Όλα τα περιφερειακά συνδέονται απευθείας, χωρίς multiplexers. |
-| **Σταθερή τροφοδοσία 5 V** | Για σταθερές μετρήσεις από τον αισθητήρα, την οθόνη και τον DHT11. |
+| **4 hardware serial ports (UART)** | `Serial1` (pins 18, 19) is dedicated to the ESP8266, while `Serial0` stays free for USB debugging. |
+| **256 KB Flash** | The Blynk, MAX30105, DHT, LCD and ESP8266 libraries fit together. The sketch uses only 11%. |
+| **54 digital and 16 analog pins** | All peripherals connect directly, with no multiplexers. |
+| **Stable 5 V supply** | Steady readings from the sensor, the display and the DHT11. |
 
 ---
 
-## Μέτρηση παλμών και οξυγόνου
+## Measuring heart rate and blood oxygen
 
-Ο αισθητήρας ρίχνει **κόκκινο και υπέρυθρο φως** στο δάχτυλο και ένας φωτοανιχνευτής μετρά πόσο επιστρέφει. Σε κάθε
-χτύπο της καρδιάς ο όγκος του αίματος αλλάζει λίγο, και μαζί του το φως που απορροφάται. Αυτή η ρυθμική αλλαγή δίνει
-τους παλμούς.
+The sensor shines **red and infrared light** into the fingertip and a photodetector measures how much comes back. With
+every heartbeat the blood volume changes slightly, and so does the absorbed light. This rhythmic change gives the
+heart rate.
 
-Για το **οξυγόνο**: το αίμα με λίγο οξυγόνο απορροφά περισσότερο **κόκκινο** φως, ενώ το οξυγονωμένο απορροφά περισσότερο
-**υπέρυθρο**. Συγκρίνοντας τις δύο μετρήσεις υπολογίζεται ο λόγος των λόγων:
+For **blood oxygen**: blood with little oxygen absorbs more **red** light, while oxygenated blood absorbs more
+**infrared**. Comparing the two gives the ratio of ratios:
 
-$$R = \frac{AC_{red}/DC_{red}}{AC_{IR}/DC_{IR}} \qquad SpO_2 = 100 - 23{,}3\,(R - 0{,}4) + 5$$
+$$R = \frac{AC_{red}/DC_{red}}{AC_{IR}/DC_{IR}} \qquad SpO_2 = 100 - 23.3\,(R - 0.4) + 5$$
 
-όπου AC είναι το παλμικό μέρος του σήματος και DC η σταθερή βάση. Το +5 είναι εμπειρική διόρθωση. Η τιμή περιορίζεται
-στο 80–100% και εξομαλύνεται εκθετικά (`ESpO2 = 0,7 × παλιά + 0,3 × νέα`), ώστε να μην «χοροπηδά» στην οθόνη.
+where AC is the pulsating part of the signal and DC the steady baseline. The +5 is an empirical correction. The value
+is clamped to 80–100% and exponentially smoothed (`ESpO2 = 0.7 × old + 0.3 × new`) so that it does not jump around on
+the display.
 
-**Παλμοί**: ο κάθε χτύπος ανιχνεύεται με το `checkForBeat()` της SparkFun και ο ρυθμός που εμφανίζεται είναι ο
-**κυλιόμενος μέσος όρος των 6 τελευταίων χτύπων**, ώστε να είναι σταθερός. Αν το υπέρυθρο σήμα πέσει κάτω από
-**7000**, η συσκευή θεωρεί ότι δεν υπάρχει δάχτυλο και εμφανίζει «Place Finger...».
+**Heart rate**: each beat is detected with SparkFun's `checkForBeat()`, and the displayed rate is the **moving average
+of the last 6 beats**, which keeps it stable. If the infrared signal drops below **7000**, the device assumes there is
+no finger and shows "Place Finger...".
 
-### Τεχνικές βελτιώσεις
+### Tuning that fixed the readings
 
-Η αρχική έκδοση έδινε λάθος τιμές (π.χ. **40 BPM αντί για 70–80**). Με πειραματισμό βρέθηκαν οι ρυθμίσεις:
+The first version gave wrong values (e.g. **40 BPM instead of 70–80**). Experimenting led to these settings:
 
-| Ρύθμιση | Τιμή | Γιατί |
+| Setting | Value | Why |
 |---|---|---|
-| **Ρυθμός δειγματοληψίας** | 400 Hz, χωρίς μέσο όρο δειγμάτων | Στα 100 Hz οι γρήγορες αλλαγές του σήματος χάνονταν και οι παλμοί μετριούνταν λιγότεροι. |
-| **Εύρος ADC** | 16384 | Αποφεύγεται ο **κορεσμός**: όταν το σήμα «χτυπά» στο όριο, η κυματομορφή κόβεται και χάνονται παλμοί. |
-| **Φωτεινότητα LED** | 0x1F (σταθερή) | Αρκετό φως για καθαρό σήμα, χωρίς να «τυφλώνεται» ο αισθητήρας. |
-| **Όριο ανίχνευσης δαχτύλου** | 7000 | Προσδιορίστηκε πειραματικά για αυτές τις ρυθμίσεις φωτεινότητας και ADC. |
+| **Sample rate** | 400 Hz, no sample averaging | At 100 Hz the fast parts of the waveform were lost and beats were undercounted. |
+| **ADC range** | 16384 | Avoids **saturation**: when the signal hits the ADC limit the waveform is clipped and beats are lost. |
+| **LED brightness** | 0x1F (fixed) | Enough light for a clean signal without "blinding" the sensor. |
+| **Finger threshold** | 7000 | Found experimentally for these brightness and ADC settings. |
 
 ---
 
-## Multitasking χωρίς `delay()`
+## Multitasking without `delay()`
 
-Με `delay(1000)` το Arduino θα «πάγωνε» για ένα δευτερόλεπτο και, στα 400 Hz, θα έχανε **400 δείγματα**, άρα
-ολόκληρους παλμούς. Γι' αυτό ο κώδικας δεν σταματά ποτέ: κάθε εργασία τρέχει όταν έρθει η ώρα της, με χρονισμό `millis()`.
+With `delay(1000)` the Arduino would freeze for one second and, at 400 Hz, miss **400 samples**, i.e. whole heartbeats.
+So the loop never stops: every task runs when its time comes, timed with `millis()`.
 
-| Εργασία | Κάθε πότε | Διάρκεια |
+| Task | How often | Duration |
 |---|---|---|
-| Ανάγνωση MAX30105 και ανίχνευση παλμού | συνεχώς (κάθε δείγμα ≈ 2,5 ms) | ελάχιστη |
-| Ανάγνωση DHT11 και ενημέρωση LCD και LED | 1 s | ≈ 50–100 ms |
-| Αποστολή στο Blynk | 4 s | ≈ 200–500 ms, ανάλογα με το WiFi |
+| Read MAX30105 and detect beats | continuously (one sample ≈ 2.5 ms) | minimal |
+| Read DHT11, update LCD and LEDs | 1 s | ≈ 50–100 ms |
+| Upload to Blynk | 4 s | ≈ 200–500 ms, depending on WiFi |
 
-Το DHT11 χρειάζεται έτσι κι αλλιώς τουλάχιστον 1 δευτερόλεπτο ανάμεσα στις μετρήσεις, και η αποστολή ανά 4 δευτερόλεπτα
-προστατεύει το ESP8266, που με πολλές εντολές σε λίγο χρόνο μπορεί να «κολλήσει». Οι μη έγκυρες αναγνώσεις του DHT11
-απορρίπτονται με `isnan()`, ώστε να μην εμφανίζεται «NaN» στην οθόνη.
+The DHT11 needs at least 1 second between readings anyway, and uploading every 4 seconds protects the ESP8266, which
+can hang if it receives too many commands in a short time. Invalid DHT11 readings are discarded with `isnan()`, so
+"NaN" never appears on the display.
 
 ---
 
-## Υλικό και συνδεσμολογία
+## Hardware and wiring
 
-| Εξάρτημα | Σύνδεση στο Arduino Mega |
+| Component | Arduino Mega connection |
 |---|---|
-| MAX30105 (παλμοί, SpO₂) | I2C: SDA → 20, SCL → 21 |
-| Οθόνη LCD 16x2 με I2C (διεύθυνση `0x27`) | I2C: SDA → 20, SCL → 21 (μόνο 4 καλώδια αντί για 16) |
-| DHT11 (θερμοκρασία, υγρασία) | Data → pin 7 |
-| LED κόκκινο / πράσινο | pin 5 / pin 4 |
-| ESP8266-01 (WiFi) | Serial1: TX1 (18), RX1 (19), 115200 baud, τροφοδοσία 3,3 V |
+| MAX30105 (heart rate, SpO₂) | I2C: SDA → 20, SCL → 21 |
+| 16x2 LCD with I2C backpack (address `0x27`) | I2C: SDA → 20, SCL → 21 (4 wires instead of 16) |
+| DHT11 (temperature, humidity) | Data → pin 7 |
+| Red / green LED | pin 5 / pin 4 |
+| ESP8266-01 (WiFi) | Serial1: TX1 (18), RX1 (19), 115200 baud, 3.3 V supply |
 
-**DHT11**: θερμοκρασία 0–50 °C (±2 °C), υγρασία 20–90% (±5%), χρόνος απόκρισης περίπου 2 s.
+**DHT11**: temperature 0–50 °C (±2 °C), humidity 20–90% (±5%), response time about 2 s.
 
 ---
 
-## Εγκατάσταση
+## Setup
 
-1. **Arduino IDE** με πλακέτα **Arduino Mega or Mega 2560**.
-2. **Βιβλιοθήκες** (*Sketch → Include Library → Manage Libraries*):
+1. **Arduino IDE** with the **Arduino Mega or Mega 2560** board.
+2. **Libraries** (*Sketch → Include Library → Manage Libraries*):
 
-   | Βιβλιοθήκη | Ρόλος |
+   | Library | Role |
    |---|---|
-   | *Blynk* (Volodymyr Shymanskyy) | Σύνδεση με το Blynk: Virtual Pins, ειδοποιήσεις |
-   | *BlynkESP8266_Lib* (παρέχει το `ESP8266_Lib.h`) | Έλεγχος του ESP8266 με AT commands |
-   | *SparkFun MAX3010x Pulse and Proximity Sensor Library* | Ρύθμιση του αισθητήρα και ανίχνευση παλμού |
-   | *DHT sensor library* (Adafruit) | Θερμοκρασία και υγρασία |
-   | *LiquidCrystal I2C* (Frank de Brabander) | Οθόνη LCD μέσω I2C |
+   | *Blynk* (Volodymyr Shymanskyy) | Blynk connection: Virtual Pins, notifications |
+   | *BlynkESP8266_Lib* (provides `ESP8266_Lib.h`) | Drives the ESP8266 with AT commands |
+   | *SparkFun MAX3010x Pulse and Proximity Sensor Library* | Sensor configuration and beat detection |
+   | *DHT sensor library* (Adafruit) | Temperature and humidity |
+   | *LiquidCrystal I2C* (Frank de Brabander) | LCD over I2C |
 
-3. **Κωδικοί**: στον φάκελο `healthmonitor/`, αντιγράψτε το
-   [`arduino_secrets.example.h`](healthmonitor/arduino_secrets.example.h) σε νέο αρχείο **`arduino_secrets.h`** και
-   συμπληρώστε το Template ID και το Auth Token από το Blynk console, καθώς και το όνομα και τον κωδικό του WiFi.
-   Το `arduino_secrets.h` **δεν ανεβαίνει ποτέ στο GitHub** (βλ. `.gitignore`).
-4. Άνοιγμα του [`healthmonitor/healthmonitor.ino`](healthmonitor/healthmonitor.ino) και **Upload**.
-5. Στο **Blynk**: Template με Virtual Pins `V0` (BPM), `V1` (SpO₂ %), `V2` (θερμοκρασία °C), `V3` (υγρασία %) και
-   ένα Event με κωδικό `health_alert` για τις ειδοποιήσεις.
-
----
-
-## Περιορισμοί και ιδέες
-
-- Οι μετρήσεις **δεν έχουν συγκριθεί συστηματικά** με ιατρικό οξύμετρο. Το SpO₂ βασίζεται σε εμπειρικό τύπο.
-- Ο DHT11 είναι οικονομικός αλλά με περιορισμένη ακρίβεια (±2 °C). Ο DHT22 θα ήταν πιο ακριβής.
-- Η κίνηση του δαχτύλου αλλοιώνει τη μέτρηση: δεν υπάρχει ακόμα ανίχνευση κίνησης.
-- Ιδέες: σύγκριση με εμπορικό οξύμετρο, ιστορικό μετρήσεων στο Blynk, μπαταρία και θήκη για φορητή χρήση.
+3. **Credentials**: in the `healthmonitor/` folder, copy
+   [`arduino_secrets.example.h`](healthmonitor/arduino_secrets.example.h) to a new file **`arduino_secrets.h`** and
+   fill in the Template ID and Auth Token from the Blynk console, plus your WiFi name and password.
+   `arduino_secrets.h` is **never committed to GitHub** (see `.gitignore`).
+4. Open [`healthmonitor/healthmonitor.ino`](healthmonitor/healthmonitor.ino) and click **Upload**.
+5. In **Blynk**: a template with Virtual Pins `V0` (BPM), `V1` (SpO₂ %), `V2` (temperature °C), `V3` (humidity %) and
+   an Event with the code `health_alert` for notifications.
 
 ---
 
-## Δομή
+## Limitations and ideas
 
-| Αρχείο | Τι είναι |
+- The readings have **not been systematically compared** with a medical oximeter. SpO₂ uses an empirical formula.
+- The DHT11 is cheap but of limited accuracy (±2 °C). A DHT22 would be more accurate.
+- Finger movement distorts the measurement: there is no motion detection yet.
+- Ideas: comparison with a commercial oximeter, measurement history in Blynk, battery and enclosure for portable use.
+
+---
+
+## Layout
+
+| File | What it is |
 |---|---|
-| [`healthmonitor/healthmonitor.ino`](healthmonitor/healthmonitor.ino) | Ο κώδικας του Arduino |
-| [`healthmonitor/arduino_secrets.example.h`](healthmonitor/arduino_secrets.example.h) | Υπόδειγμα για τους κωδικούς Blynk και WiFi |
+| [`healthmonitor/healthmonitor.ino`](healthmonitor/healthmonitor.ino) | The Arduino sketch |
+| [`healthmonitor/arduino_secrets.example.h`](healthmonitor/arduino_secrets.example.h) | Template for the Blynk and WiFi credentials |
