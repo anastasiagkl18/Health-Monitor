@@ -1,0 +1,13 @@
+# Credentials (Blynk token, WiFi) - never commit
+arduino_secrets.h
+
+# Arduino build output
+build/
+
+# Office temporary / lock files
+~$*
+
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store
